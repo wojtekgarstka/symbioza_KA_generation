@@ -1,5 +1,6 @@
 # importing files
 import pandas as pd
 
-print("testing")
+if __name__=='__main__':
+    print("testing")
 
