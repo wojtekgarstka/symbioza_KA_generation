@@ -31,7 +31,6 @@ dir='test files/abstracts-for-posters.csv'
 df=pd.read_csv(dir) #to be put in function
 
 participants=[]
-
 for i in range(len(df)):
     participant=OrderedAuthorsList()
     authorslist=[]
@@ -54,8 +53,9 @@ for i in range(len(df)):
     b=1
     for a in range(5):
         #affi index
+        author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
         affi_num = str("Affiliation " + str(a+1)) #Affi 1, Affi 2 etc.
-        is_nan=df[affi_num].notna()
+        is_nan=df[author_num].notna()
         if is_nan[i]: #Checks if cell isn't empty
             
             affi_name= df[affi_num][i]
