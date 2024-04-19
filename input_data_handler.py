@@ -151,7 +151,7 @@ for i in range(len(df)):
     print('')
     print(participants[i].abstract_content)
     print('')
-'''
+
 #testing no. 2 -> próba generacji LaTeX
 for i in range(len(df)):
     print("")
@@ -180,4 +180,3 @@ for i in range(len(df)):
     if participants[i].image_link!=None:
         print("link to img: " + str(participants[i].image_link))
     print('\Keywords{\\textbf{Keywords:} '+str(participants[i].keywords))
-'''
