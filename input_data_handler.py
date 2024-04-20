@@ -180,3 +180,38 @@ for i in range(len(df)):
     if participants[i].image_link!=None:
         print("link to img: " + str(participants[i].image_link))
     print('\Keywords{\\textbf{Keywords:} '+str(participants[i].keywords))
+
+#testing #3 próba generacji do pliku
+file=open('oral.tex','w+')
+file.write("\\newpage \n\\phantomsection\n\\addcontentsline{toc}{section}{Oral presentations}\n\\phantomsection\n")
+file.write("\\lhead{Oral presentations}\n\\rfoot{\\begin{footnotesize} \\hyperlink{program-oral:1}{$\\triangleleft$ go back to session view} \\end{footnotesize}}\n\\normalsize")
+for i in range(len(df)):
+    file.write("\n")
+    file.write("\\newpage \hypertarget"+"{oral:"+"{a}".format(a=str(i+1))+"}{"+"}\n" )
+    file.write("\OralTitle{O-"+"{a}".format(a=str(i+1))+": "+str(participants[i].abstract_title)+"}\n")
+    file.write('\n')
+    file.write("\AbstractAuthors{")
+    for j in range(len(participants[i].ordered_tupled_list_of_authors)-1):
+        file.write(str(participants[i].ordered_tupled_list_of_authors[j])+'$^{'+str(participants[i].affiliations_nums[j])+'}$, ')
+    file.write(str(participants[i].ordered_tupled_list_of_authors[len(participants[i].ordered_tupled_list_of_authors)-1])+'$^{'+str(participants[i].affiliations_nums[len(participants[i].ordered_tupled_list_of_authors)-1])+'}$'+"}\n")
+    file.write('\n')
+    file.write("\Affiliation{")
+    for j in range(len(participants[i].affiliations_names)-1):
+        file.write('$^{'+str(participants[i].affiliations_nums[j])+'}$'+str(participants[i].affiliations_names[j])+"\n")
+    file.write('$^{'+str(participants[i].affiliations_nums[len(participants[i].affiliations_names)-1])+'}$'+str(participants[i].affiliations_names[len(participants[i].affiliations_names)-1])+"}\n")
+    file.write('\n')
+    file.write("\Email{*\href{mailto:")
+    for j in range(len(participants[i].corresponding_mails)):
+        if participants[i].corresponding_mails[j]!=None:
+            file.write(str(participants[i].corresponding_mails[j])+"}{"+str(participants[i].corresponding_mails[j]))
+        else:
+            None
+    file.write("}"+"}\n")
+    file.write('\n')
+    file.write(participants[i].abstract_content)
+    file.write('\n')
+    if participants[i].image_link!=None:
+        file.write("link to img: " + str(participants[i].image_link))
+    file.write('\n')
+    file.write('\Keywords{\\textbf{Keywords:} '+str(participants[i].keywords)+"}")
+file.close()
