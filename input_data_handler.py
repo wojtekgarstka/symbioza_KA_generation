@@ -103,6 +103,7 @@ def df_reader(df):
         if b==1:
             participant.corresponding_mails=maillist
         else:
+            #If the corresponding author is not on the list, or more than one corresponding author mentioned, the Warning is generated adittionaly
             participant.corresponding_mails=[str(df['Corresponding author\'s email'][i])+"WARNING! No corresponding author assigned"]
 
 
