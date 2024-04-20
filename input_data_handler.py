@@ -80,6 +80,8 @@ def df_reader(df):
 
             else:
                 break
+
+
         # TO BE CHANGED: here shall we put additional authors and affiliations (if there are more than 5)
         participant.ordered_tupled_list_of_authors=authorslist
         '''gives corresponding mails were listed'''
@@ -88,8 +90,8 @@ def df_reader(df):
         for a in range(5):
             author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
             #if df[author_num][i]!=[]: #checks if file is not empty
-            is_nan=df[author_num].notna()
-            if is_nan[i]: #Checks if cell isn't empty
+            not_na=df[author_num].notna()
+            if not_na[i]: #Checks if cell isn't empty
                 author_name= df[author_num][i]
                 author_name1=author_name
                 if author_name1==df['Corresponding author'][i]:
@@ -101,7 +103,8 @@ def df_reader(df):
         if b==1:
             participant.corresponding_mails=maillist
         else:
-            participant.corresponding_mails=str(df['Corresponding author\'s email'][i])
+            participant.corresponding_mails=[str(df['Corresponding author\'s email'][i])+"WARNING! No corresponding author assigned"]
+
 
         '''List of unique affiliations + list of numbers corresponding to affilations'''
         affilist=[] #list of affiliations
