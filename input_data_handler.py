@@ -33,105 +33,110 @@ class SymbiosisActiveParticipantInfo:
 
     def __init__(self, infodump):
         pass
-dir='test files/abstracts-for-posters.csv'
-df=pd.read_csv(dir) #to be put in function
-
-#list of all participants
-participants=[]
-for i in range(len(df)):
-    participant=OrderedAuthorsList()
-    '''Abstract title'''
-    participant.abstract_title=str(df['Abstract title'][i])
-    '''Abstract content'''
-    if df['Abstract'].notna()[i]:
-        participant.abstract_content=str(df['Abstract'][i])
-    else:
-        participant.abstract_content="Warning!!!!! EMPTY"
-    '''image link'''
-    if df['Upload image'].notna()[i]:
-        participant.image_link=str(df['Upload image'][i])
-    else:
-        participant.image_link = None
-    '''Abstract keywords'''
-    participant.keywords = str(df['keywords'][i])
-    '''List of authors'''
-    authorslist=[]
-    corresponding_sings = ['*',str("#"), str('$')] 
-    print(corresponding_sings)
-    #generates list of authors with authors names for every presentation
-    corresp_counter=0
-    for a in range(5):
-        author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
-        #if df[author_num][i]!=[]: #checks if file is not empty
-        is_nan=df[author_num].notna()
-        if is_nan[i]: #Checks if cell isn't empty
-            author_name= df[author_num][i]
-            author_name1=author_name
-            if author_name1==df["Presenter"][i]:
-                author_name = "\\underline{"+str(author_name)+"}" #adds underline in LaTeX
-            if author_name1==df["Corresponding author"][i]: #adds first corresponding author
-                if corresp_counter==0:
-                    author_name=author_name+"*"
-            authorslist.append(author_name)
-            
-
-        else:
-            break
-    # TO BE CHANGED: here shall we put additional authors and affiliations (if there are more than 5)
-    participant.ordered_tupled_list_of_authors=authorslist
-    '''gives corresponding mails were listed'''
-    maillist = []
-    b=0
-    for a in range(5):
-        author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
-        #if df[author_num][i]!=[]: #checks if file is not empty
-        is_nan=df[author_num].notna()
-        if is_nan[i]: #Checks if cell isn't empty
-            author_name= df[author_num][i]
-            author_name1=author_name
-            if author_name1==df['Corresponding author'][i]:
-                mail = df['Corresponding author\'s email'][i] #adds underline in LaTeX
-                b=1
-            else:
-                mail = None
-            maillist.append(mail)
-    if b==1:
-        participant.corresponding_mails=maillist
-    else:
-        participant.corresponding_mails=df['Corresponding author\'s email'][i]
-
-    '''List of unique affiliations + list of numbers corresponding to affilations'''
-    affilist=[] #list of affiliations
-    affilist_nums=[] # list of numbers corresponding to affilations
-    
-    b=1 # b as a counter for affiliations used
-    for a in range(5):
-        #affi index
-        author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
-        affi_num = str("Affiliation " + str(a+1)) #Affi 1, Affi 2 etc.
-        is_nan=df[author_num].notna() #it is counted by author_num, because there are names without affis, but there aren't affis without names
-        if is_nan[i]: #Checks if cell isn't empty
-            
-            affi_name= df[affi_num][i]
-            if affi_name not in affilist:
-                affilist.append(affi_name)
-                affilist_nums.append(b)
-                b+=1
-            else:
-                affilist_nums.append(affilist.index(affi_name)+1)
-
-        else:
-            break
-    participant.affiliations_names=affilist 
-    participant.affiliations_nums=affilist_nums 
-
-
-    #adds participant to list of participants
-    participants.append(participant)
-
+file_path='test files/abstracts-for-posters.csv'
+#df=pd.read_csv(dir) #to be put in function
 def abstract_csv_reader(link_to_csv):
-    pass
+    df=pd.read_csv(link_to_csv)
+    return df
+#list of all participants
+def df_reader(df):
+    participants=[]
+    for i in range(len(df)):
+        participant=OrderedAuthorsList()
+        '''Abstract title'''
+        participant.abstract_title=str(df['Abstract title'][i])
+        '''Abstract content'''
+        if df['Abstract'].notna()[i]:
+            participant.abstract_content=str(df['Abstract'][i])
+        else:
+            participant.abstract_content="Warning!!!!! EMPTY"
+        '''image link'''
+        if df['Upload image'].notna()[i]:
+            participant.image_link=str(df['Upload image'][i])
+        else:
+            participant.image_link = None
+        '''Abstract keywords'''
+        participant.keywords = str(df['keywords'][i])
+        '''List of authors'''
+        authorslist=[]
+        corresponding_sings = ['*',str("#"), str('$')] 
+        print(corresponding_sings)
+        #generates list of authors with authors names for every presentation
+        corresp_counter=0
+        for a in range(5):
+            author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
+            #if df[author_num][i]!=[]: #checks if file is not empty
+            is_nan=df[author_num].notna()
+            if is_nan[i]: #Checks if cell isn't empty
+                author_name= df[author_num][i]
+                author_name1=author_name
+                if author_name1==df["Presenter"][i]:
+                    author_name = "\\underline{"+str(author_name)+"}" #adds underline in LaTeX
+                if author_name1==df["Corresponding author"][i]: #adds first corresponding author
+                    if corresp_counter==0:
+                        author_name=author_name+"*"
+                authorslist.append(author_name)
+                
 
+            else:
+                break
+        # TO BE CHANGED: here shall we put additional authors and affiliations (if there are more than 5)
+        participant.ordered_tupled_list_of_authors=authorslist
+        '''gives corresponding mails were listed'''
+        maillist = []
+        b=0
+        for a in range(5):
+            author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
+            #if df[author_num][i]!=[]: #checks if file is not empty
+            is_nan=df[author_num].notna()
+            if is_nan[i]: #Checks if cell isn't empty
+                author_name= df[author_num][i]
+                author_name1=author_name
+                if author_name1==df['Corresponding author'][i]:
+                    mail = df['Corresponding author\'s email'][i] #adds underline in LaTeX
+                    b=1
+                else:
+                    mail = None
+                maillist.append(mail)
+        if b==1:
+            participant.corresponding_mails=maillist
+        else:
+            participant.corresponding_mails=str(df['Corresponding author\'s email'][i])
+
+        '''List of unique affiliations + list of numbers corresponding to affilations'''
+        affilist=[] #list of affiliations
+        affilist_nums=[] # list of numbers corresponding to affilations
+        
+        b=1 # b as a counter for affiliations used
+        for a in range(5):
+            #affi index
+            author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
+            affi_num = str("Affiliation " + str(a+1)) #Affi 1, Affi 2 etc.
+            is_nan=df[author_num].notna() #it is counted by author_num, because there are names without affis, but there aren't affis without names
+            if is_nan[i]: #Checks if cell isn't empty
+                
+                affi_name= df[affi_num][i]
+                if affi_name not in affilist:
+                    affilist.append(affi_name)
+                    affilist_nums.append(b)
+                    b+=1
+                else:
+                    affilist_nums.append(affilist.index(affi_name)+1)
+
+            else:
+                break
+        participant.affiliations_names=affilist 
+        participant.affiliations_nums=affilist_nums 
+
+
+        #adds participant to list of participants
+        participants.append(participant)
+    return participants
+
+#function working for sample dir
+df=abstract_csv_reader(file_path)
+participants=df_reader(df)
+print(dir(participants))
 
 if __name__== '__main__':
     pass
