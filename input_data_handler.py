@@ -50,22 +50,26 @@ class OrderedAuthorsList:
         used_mails = 0
         mails_pointers = ["*", "#", "&"]
         for author in self.ordered_tupled_list_of_authors:
+            print(author)
             author_str = author[0]
             if author[3]: # if presenting we underscore
                 author_str = "\\underline{"+author_str+"}"
             if author[2]: # if corresponding we add
                 author_str += f"{mails_pointers[used_mails]}"
             # now appending affiliations
-            if author[1]: # if there is an affiliation
+            print("what",author[1] )
+            if author[1] or author[1]==0: # if there is an affiliation, xdddd 0 is false i forgot
+                print(str(author[1] + 1))
                 author_str += "$^{"+str(author[1]+1)+"}$"
             if ",$^{" in author_str: # makeshift so the corresponding would have superscript comma
                 author_str = author_str.replace(',$^{','$^{,')
             string_to_insert = string_to_insert + author_str
             if author_number != len(self.ordered_tupled_list_of_authors)-1:
                 string_to_insert = string_to_insert + ", "
-                if author_number%3:
+                if author_number % 3 == 0 and author_number != 0:
                     string_to_insert = string_to_insert + "\\\\"
             author_number += 1
+        print(string_to_insert)
         return string_to_insert
 
     def get_affiliations(self):
@@ -83,11 +87,9 @@ class OrderedAuthorsList:
         for author in self.ordered_tupled_list_of_authors:
             _, _, corresponding, _ = author
             if corresponding:
-                print(corresponding)
                 if string_to_insert != "":
                     string_to_insert += "~~~~"
                 string_to_insert += f"{mails_pointers[used_mails]}\\href{{mailto:{corresponding}}}{{{corresponding}}}"
-        print(string_to_insert)
         return string_to_insert
 
 
@@ -122,7 +124,7 @@ class SymbiosisActiveParticipantInfo:
             self.abstract = df["Abstract.1"]
         else:
             self.abstract = df["Abstract"]
-        self.abstract = self.abstract.replace(". ", ".\n")
+        self.abstract = self.abstract
 
         self.abstract_title = df['Abstract title']
         self.keywords = df["keywords"]
@@ -142,8 +144,8 @@ class SymbiosisActiveParticipantInfo:
             "INSERT-TITLE": self.abstract_title,
             "INSERT-AUTHORS-NAMES": self.authors_list_class.get_authors_names(),
             "INSERT-AFFILIATIONS": self.authors_list_class.get_affiliations(),
-            "INSERT-CORRESPONDING-EMAILS": self.authors_list_class.get_corresponding_mails(),
-            "INSERT-MAIN-TEXT": self.abstract,
+            "INSERT-CORRESPONDING-EMAILS": self.authors_list_class.get_corresponding_mails().replace('_','\_'),
+            "INSERT-MAIN-TEXT": self.abstract.replace(". ", ".\n"),
             "INSERT-KEYWORDS": self.keywords
         }
         return dict
