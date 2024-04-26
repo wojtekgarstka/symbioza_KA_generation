@@ -1,226 +1,195 @@
 import pandas as pd
+from math import isnan
+from pprint import pp, pprint
+
 
 class OrderedAuthorsList:
     """
     A class holding list of authors, their references, and links of references
     """
-    id = None
-    abstract_title = None #hold abstract title
-    abstract_content = None #holds abstract content, if abstract content==None reports error
-    '''PROBLEM #0: There are to abstract columns, I'd suggest concatenating them'''
-    ordered_tupled_list_of_authors = []  # list like (author_name, corresponding?, [list, of, affiliations])
-    list_of_references = None
-    affiliations_names = [] #holds affiliations with underlined presenter and * added to the first corresponding author 
+    ordered_tupled_list_of_authors = None
+    # list like (author_name, [affiliations index],  corresponding_bool None or adress, presenting_bool)
+    affiliations = None  # holds affiliations
     '''PROBLEM #1: Only option of 1 coresponding author(further corresponding authors to be added in the future)'''
-    affiliations_nums = [] #holds numbers for affiliations
-    corresponding_mails = [] #holds corresponding mail assinged to a exact person with that mail, not really useful
-    '''PROBLEM #2: problem 1 continuation, no way of adding second author's email'''
-    image_link = [] #holds link for image
-    keywords = None #holds keywords
-    def __init__(self):
-        pass
+
+
+
+    def __init__(self, df):
+        #df[['Affiliation 1', 'Author 2', 'Affiliation 2', 'Author 3',
+        #    'Affiliation 3', 'Author 4', 'Affiliation 4', 'Author 5',
+        #    'Affiliation 5', 'More than 5 co-authors?',
+        #    'Please provide the list of all authors',
+        #    'Please provide the list of all authors\' afiliations',' Presenter',
+        #    "Corresponding author", "Corresponding author's email"]]
+        self.ordered_tupled_list_of_authors = []
+        self.affiliations =[]
+        for author in range(1,6):
+            if nan_handler(df[f"Author {author}"]):
+                if df[f"Affiliation {author}"] not in self.affiliations:
+                    self.affiliations.append(df[f"Affiliation {author}"])
+                corresponding = None
+                if df[f"Author {author}"] == df[f"Corresponding author"]:
+                    corresponding = df["Corresponding author's email"]
+                presenting = False
+                if df[f"Author {author}"] == df[f"Presenter"]:
+                    presenting = True
+                self.ordered_tupled_list_of_authors.append(
+                    (df[f"Author {author}"],
+                     self.affiliations.index(df[f"Affiliation {author}"]),
+                    corresponding,
+                    presenting)
+                )
+            if author == 5:
+                if nan_handler(df['More than 5 co-authors?']):
+                    self.ordered_tupled_list_of_authors.append(("MORE HAVE TO BE ADDED MANUALLY SORRY",
+                                                                None, None, False))
+    def get_authors_names(self):
+        # ugly function
+        author_number = 0
+        string_to_insert = ""
+        used_mails = 0
+        mails_pointers = ["*", "#", "&"]
+        for author in self.ordered_tupled_list_of_authors:
+            author_str = author[0]
+            if author[3]: # if presenting we underscore
+                author_str = "\\underline{"+author_str+"}"
+            if author[2]: # if corresponding we add
+                author_str += f"{mails_pointers[used_mails]}"
+            # now appending affiliations
+            if author[1]: # if there is an affiliation
+                author_str += "$^{"+str(author[1]+1)+"}$"
+            if ",$^{" in author_str: # makeshift so the corresponding would have superscript comma
+                author_str = author_str.replace(',$^{','$^{,')
+            string_to_insert = string_to_insert + author_str
+            if author_number != len(self.ordered_tupled_list_of_authors)-1:
+                string_to_insert = string_to_insert + ", "
+                if author_number%3:
+                    string_to_insert = string_to_insert + "\\\\"
+            author_number += 1
+        return string_to_insert
+
+    def get_affiliations(self):
+        string_to_insert = ""
+        for index, affiliation in enumerate(self.affiliations):
+            if string_to_insert != "":
+                string_to_insert += "\\\\"
+            string_to_insert = f"$^{{{1}}}$ {affiliation}"
+        return string_to_insert
+
+    def get_corresponding_mails(self):
+        used_mails = 0
+        mails_pointers = ["*", "#", "&"]
+        string_to_insert = ""
+        for author in self.ordered_tupled_list_of_authors:
+            _, _, corresponding, _ = author
+            if corresponding:
+                print(corresponding)
+                if string_to_insert != "":
+                    string_to_insert += "~~~~"
+                string_to_insert += f"{mails_pointers[used_mails]}\\href{{mailto:{corresponding}}}{{{corresponding}}}"
+        print(string_to_insert)
+        return string_to_insert
+
+
+
 
 class SymbiosisActiveParticipantInfo:
     """
     A class holding information of symbiosis participants which can recreate fully abstracts for posters
     """
-    name_of_participant = None
+    participant_name = None
     presentation_title = None
-    authors_list_class = None
     participants_mail = None
-    abstract_main_part = None
+    abstract = None
     image_link = None  # if not none, then fetch it and put into folder
+    keywords = None
 
-    def __init__(self, infodump):
-        pass
-file_path='test files/abstracts-for-posters.csv'
-#df=pd.read_csv(dir) #to be put in function
-def abstract_csv_reader(link_to_csv):
-    df=pd.read_csv(link_to_csv)
-    return df
-#list of all participants
-def df_reader(df):
-    participants=[]
-    for i in range(len(df)):
-        participant=OrderedAuthorsList()
-        '''Abstract title'''
-        participant.abstract_title=str(df['Abstract title'][i])
-        '''Abstract content'''
-        if df['Abstract'].notna()[i]:
-            participant.abstract_content=str(df['Abstract'][i])
+    authors_list_class = None
+
+    def __init__(self, df):
+        '''
+        Takes a person and creates object for it
+
+        this is so ugh
+        TODO make this not dependent on format of csv as it is VERY unstable
+
+        :param df: dataframe WITH CORRECT NAMES
+        '''
+        self.participants_mail = df["Email - same as in the registration form"]
+        if nan_handler(df["Do you wish to include an image in your abstract?"]) in [True, "True", "Yes"]:
+            # istfg get your forms columns right
+            self.image_link = df["Upload image"]
+            self.abstract = df["Abstract.1"]
         else:
-            participant.abstract_content="Warning!!!!! EMPTY"
-        '''image link'''
-        if df['Upload image'].notna()[i]:
-            participant.image_link=str(df['Upload image'][i])
+            self.abstract = df["Abstract"]
+        self.abstract = self.abstract.replace(". ", ".\n")
+
+        self.abstract_title = df['Abstract title']
+        self.keywords = df["keywords"]
+
+        # TODO prone to column name changes
+        self.authors_list_class = OrderedAuthorsList(
+            df[['Author 1', 'Affiliation 1', 'Author 2', 'Affiliation 2', 'Author 3',
+                'Affiliation 3', 'Author 4', 'Affiliation 4', 'Author 5',
+                'Affiliation 5', 'More than 5 co-authors?',
+                'Please provide the list of all authors',
+                'Please provide the list of all authors\' afiliations', 'Presenter',
+                "Corresponding author", "Corresponding author's email"]])
+        self.participant_name = df["Presenter"]
+
+    def get_insert_dictionary(self):
+        dict = {
+            "INSERT-TITLE": self.abstract_title,
+            "INSERT-AUTHORS-NAMES": self.authors_list_class.get_authors_names(),
+            "INSERT-AFFILIATIONS": self.authors_list_class.get_affiliations(),
+            "INSERT-CORRESPONDING-EMAILS": self.authors_list_class.get_corresponding_mails(),
+            "INSERT-MAIN-TEXT": self.abstract,
+            "INSERT-KEYWORDS": self.keywords
+        }
+        return dict
+
+
+def nan_handler(something):
+    """
+    Forces a variable into string or returns None if it is a nan (as pandas love transfering to it)
+    :param something:
+    :return:
+    """
+    if type(something) == float:  # nan is a float, everything else should be either str or something else
+        if isnan(something):
+            return None
         else:
-            participant.image_link = None
-        '''Abstract keywords'''
-        participant.keywords = str(df['keywords'][i])
-        '''List of authors'''
-        authorslist=[]
-        corresponding_sings = ['*',str("#"), str('$')] 
-        print(corresponding_sings)
-        #generates list of authors with authors names for every presentation
-        corresp_counter=0
-        for a in range(5):
-            author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
-            #if df[author_num][i]!=[]: #checks if file is not empty
-            is_nan=df[author_num].notna()
-            if is_nan[i]: #Checks if cell isn't empty
-                author_name= df[author_num][i]
-                author_name1=author_name
-                if author_name1==df["Presenter"][i]:
-                    author_name = "\\underline{"+str(author_name)+"}" #adds underline in LaTeX
-                if author_name1==df["Corresponding author"][i]: #adds first corresponding author
-                    if corresp_counter==0:
-                        author_name=author_name+"*"
-                authorslist.append(author_name)
-                
-
-            else:
-                break
+            assert False, "error, somehow there is a float that isn't float"
+    else:
+        return str(something)
 
 
-        # TO BE CHANGED: here shall we put additional authors and affiliations (if there are more than 5)
-        participant.ordered_tupled_list_of_authors=authorslist
-        '''gives corresponding mails were listed'''
-        maillist = []
-        b=0
-        for a in range(5):
-            author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
-            #if df[author_num][i]!=[]: #checks if file is not empty
-            not_na=df[author_num].notna()
-            if not_na[i]: #Checks if cell isn't empty
-                author_name= df[author_num][i]
-                author_name1=author_name
-                if author_name1==df['Corresponding author'][i]:
-                    mail = df['Corresponding author\'s email'][i] #adds underline in LaTeX
-                    b=1
-                else:
-                    mail = None
-                maillist.append(mail)
-        if b==1:
-            participant.corresponding_mails=maillist
-        else:
-            #If the corresponding author is not on the list, or more than one corresponding author mentioned, the Warning is generated adittionaly
-            participant.corresponding_mails=[str(df['Corresponding author\'s email'][i])+"WARNING! No corresponding author assigned"]
+file_path = 'test files/abstracts-for-posters.csv'
 
 
-        '''List of unique affiliations + list of numbers corresponding to affilations'''
-        affilist=[] #list of affiliations
-        affilist_nums=[] # list of numbers corresponding to affilations
-        
-        b=1 # b as a counter for affiliations used
-        for a in range(5):
-            #affi index
-            author_num = str("Author " + str(a+1)) #Author 1, Author 2 etc.
-            affi_num = str("Affiliation " + str(a+1)) #Affi 1, Affi 2 etc.
-            is_nan=df[author_num].notna() #it is counted by author_num, because there are names without affis, but there aren't affis without names
-            if is_nan[i]: #Checks if cell isn't empty
-                
-                affi_name= df[affi_num][i]
-                if affi_name not in affilist:
-                    affilist.append(affi_name)
-                    affilist_nums.append(b)
-                    b+=1
-                else:
-                    affilist_nums.append(affilist.index(affi_name)+1)
 
-            else:
-                break
-        participant.affiliations_names=affilist 
-        participant.affiliations_nums=affilist_nums 
-
-
-        #adds participant to list of participants
+# list of all participants
+def df_reader(file_path):
+    df = pd.read_csv(file_path)
+    participants = []
+    for index, row in df.iterrows():
+        participant = SymbiosisActiveParticipantInfo(row)
         participants.append(participant)
     return participants
 
-#function working for sample dir
-df=abstract_csv_reader(file_path)
-participants=df_reader(df)
-print(dir(participants))
 
-if __name__== '__main__':
-    pass
 
-#testing no. 1 -> bardziej czytelne dla ludzi
-for i in range(len(df)):
-    print(str(participants[i].abstract_title))
-    for j in range(len(participants[i].ordered_tupled_list_of_authors)):
-        print(str(participants[i].ordered_tupled_list_of_authors[j])+': '+str(participants[i].affiliations_nums[j]))
-    for j in range(len(participants[i].affiliations_names)):
-        print(str(j+1)+': '+str(participants[i].affiliations_names[j]))
-    for j in range(len(participants[i].corresponding_mails)):
-        if participants[i].corresponding_mails[j]!=None:
-            print(str(participants[i].corresponding_mails[j]))
-        else:
-            None
-    print('')
-    print(participants[i].abstract_content)
-    print('')
+if __name__ == '__main__':
+    # function working for sample dir
+    participants = df_reader('test files/abstracts-for-posters.csv')
+    # print(dir(participants))
+    # testing no. 1 -> bardziej czytelne dla ludzi
+    for i in range(0, 5):
+        attrs = vars(participants[i])
+        #print(', \n'.join("%s: %s" % item for item in attrs.items()))
+        print("showing authors")
+        attrs = vars(participants[i].authors_list_class)
+        print(', \n'.join("%s: %s" % item for item in attrs.items()))
 
-#testing no. 2 -> próba generacji LaTeX
-for i in range(len(df)):
-    print("")
-    print("\\newpage \hypertarget"+"{oral:"+"{a}".format(a=str(i+1))+"}{"+"}" )
-    print("\OralTitle{O-"+"{a}): ".format(a=str(i+1))+str(participants[i].abstract_title)+"}")
-    print('')
-    print("\AbstractAuthors{",end='')
-    for j in range(len(participants[i].ordered_tupled_list_of_authors)-1):
-        print(str(participants[i].ordered_tupled_list_of_authors[j])+'$^{'+str(participants[i].affiliations_nums[j])+'}$',end=', ')
-    print(str(participants[i].ordered_tupled_list_of_authors[len(participants[i].ordered_tupled_list_of_authors)-1])+'$^{'+str(participants[i].affiliations_nums[len(participants[i].ordered_tupled_list_of_authors)-1])+'}$'+"}")
-    print("\Affiliation{",end='')
-    for j in range(len(participants[i].affiliations_names)-1):
-        print('$^{'+str(participants[i].affiliations_nums[j])+'}$'+str(participants[i].affiliations_names[j]),end=', ')
-    print('$^{'+str(participants[i].affiliations_nums[len(participants[i].affiliations_names)-1])+'}$'+str(participants[i].affiliations_names[len(participants[i].affiliations_names)-1])+"}")
-    print('')
-    print("\Email{*\href{mailto:",end='')
-    for j in range(len(participants[i].corresponding_mails)):
-        if participants[i].corresponding_mails[j]!=None:
-            print(str(participants[i].corresponding_mails[j])+"}{"+str(participants[i].corresponding_mails[j]),end='')
-        else:
-            None
-    print("}"+"}")
-    print('')
-    print(participants[i].abstract_content)
-    print('')
-    if participants[i].image_link!=None:
-        print("link to img: " + str(participants[i].image_link))
-    print('\Keywords{\\textbf{Keywords:} '+str(participants[i].keywords))
 
-#testing #3 próba generacji do pliku
-file=open('oral.tex','w+')
-file.write("\\newpage \n\\phantomsection\n\\addcontentsline{toc}{section}{Oral presentations}\n\\phantomsection\n")
-file.write("\\lhead{Oral presentations}\n\\rfoot{\\begin{footnotesize} \\hyperlink{program-oral:1}{$\\triangleleft$ go back to session view} \\end{footnotesize}}\n\\normalsize")
-for i in range(len(df)):
-    file.write("\n")
-    file.write("\\newpage \hypertarget"+"{oral:"+"{a}".format(a=str(i+1))+"}{"+"}\n" )
-    file.write("\OralTitle{O-"+"{a}".format(a=str(i+1))+": "+str(participants[i].abstract_title)+"}\n")
-    file.write('\n')
-    file.write("\AbstractAuthors{")
-    for j in range(len(participants[i].ordered_tupled_list_of_authors)-1):
-        file.write(str(participants[i].ordered_tupled_list_of_authors[j])+'$^{'+str(participants[i].affiliations_nums[j])+'}$, ')
-    file.write(str(participants[i].ordered_tupled_list_of_authors[len(participants[i].ordered_tupled_list_of_authors)-1])+'$^{'+str(participants[i].affiliations_nums[len(participants[i].ordered_tupled_list_of_authors)-1])+'}$'+"}\n")
-    file.write('\n')
-    file.write("\Affiliation{")
-    for j in range(len(participants[i].affiliations_names)-1):
-        file.write('$^{'+str(participants[i].affiliations_nums[j])+'}$'+str(participants[i].affiliations_names[j])+"\n")
-    file.write('$^{'+str(participants[i].affiliations_nums[len(participants[i].affiliations_names)-1])+'}$'+str(participants[i].affiliations_names[len(participants[i].affiliations_names)-1])+"}\n")
-    file.write('\n')
-    file.write("\Email{*\href{mailto:")
-    for j in range(len(participants[i].corresponding_mails)):
-        if participants[i].corresponding_mails[j]!=None:
-            file.write(str(participants[i].corresponding_mails[j])+"}{"+str(participants[i].corresponding_mails[j]))
-        else:
-            None
-    file.write("}"+"}\n")
-    file.write('\n')
-    file.write(participants[i].abstract_content)
-    file.write('\n')
-    if participants[i].image_link!=None:
-        file.write("link to img: " + str(participants[i].image_link))
-    file.write('\n')
-    file.write('\Keywords{\\textbf{Keywords:} '+str(participants[i].keywords)+"}")
-file.close()
+
