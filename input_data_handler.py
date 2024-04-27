@@ -1,6 +1,9 @@
 import pandas as pd
 from math import isnan
 from pprint import pp, pprint
+import os
+import requests
+
 
 
 class OrderedAuthorsList:
@@ -50,16 +53,16 @@ class OrderedAuthorsList:
         used_mails = 0
         mails_pointers = ["*", "#", "&"]
         for author in self.ordered_tupled_list_of_authors:
-            print(author)
+            #print(author)
             author_str = author[0]
             if author[3]: # if presenting we underscore
                 author_str = "\\underline{"+author_str+"}"
             if author[2]: # if corresponding we add
                 author_str += f"{mails_pointers[used_mails]}"
             # now appending affiliations
-            print("what",author[1] )
+            #print("what",author[1] )
             if author[1] or author[1]==0: # if there is an affiliation, xdddd 0 is false i forgot
-                print(str(author[1] + 1))
+                #print(str(author[1] + 1))
                 author_str += "$^{"+str(author[1]+1)+"}$"
             if ",$^{" in author_str: # makeshift so the corresponding would have superscript comma
                 author_str = author_str.replace(',$^{','$^{,')
@@ -69,7 +72,7 @@ class OrderedAuthorsList:
                 if author_number % 3 == 0 and author_number != 0:
                     string_to_insert = string_to_insert + "\\\\"
             author_number += 1
-        print(string_to_insert)
+        #print(string_to_insert)
         return string_to_insert
 
     def get_affiliations(self):
@@ -93,7 +96,11 @@ class OrderedAuthorsList:
         return string_to_insert
 
 
-
+def download_image(image_link, image_name):
+    print(image_link)
+    img_data = requests.get(image_link).content
+    with open(f'downloaded/{image_name}.jpg', 'wb') as handler:
+        handler.write(img_data)
 
 class SymbiosisActiveParticipantInfo:
     """
@@ -121,6 +128,7 @@ class SymbiosisActiveParticipantInfo:
         if nan_handler(df["Do you wish to include an image in your abstract?"]) in [True, "True", "Yes"]:
             # istfg get your forms columns right
             self.image_link = df["Upload image"]
+            download_image(self.image_link, )
             self.abstract = df["Abstract.1"]
         else:
             self.abstract = df["Abstract"]
@@ -145,7 +153,7 @@ class SymbiosisActiveParticipantInfo:
             "INSERT-AUTHORS-NAMES": self.authors_list_class.get_authors_names(),
             "INSERT-AFFILIATIONS": self.authors_list_class.get_affiliations(),
             "INSERT-CORRESPONDING-EMAILS": self.authors_list_class.get_corresponding_mails().replace('_','\_'),
-            "INSERT-MAIN-TEXT": self.abstract.replace(". ", ".\n"),
+            "INSERT-MAIN-TEXT": self.abstract.replace(". ", ".\n").replace("%", "\%"),
             "INSERT-KEYWORDS": self.keywords
         }
         return dict
