@@ -43,7 +43,7 @@ class OrderedAuthorsList:
                     presenting)
                 )
             if author == 5:
-                if nan_handler(df['More than 5 co-authors?']):
+                if nan_handler(df['Please provide the list of all authors']):
                     self.ordered_tupled_list_of_authors.append(("MORE HAVE TO BE ADDED MANUALLY SORRY",
                                                                 None, None, False))
     def get_authors_names(self):
@@ -80,7 +80,7 @@ class OrderedAuthorsList:
         for index, affiliation in enumerate(self.affiliations):
             if string_to_insert != "":
                 string_to_insert += "\\\\"
-            string_to_insert = f"$^{{{1}}}$ {affiliation}"
+            string_to_insert += f"$^{{{index+1}}}$ {affiliation}"
         return string_to_insert
 
     def get_corresponding_mails(self):
@@ -111,6 +111,7 @@ class SymbiosisActiveParticipantInfo:
     participants_mail = None
     abstract = None
     image_link = None  # if not none, then fetch it and put into folder
+    image_dir= ""
     keywords = None
 
     authors_list_class = None
@@ -125,11 +126,13 @@ class SymbiosisActiveParticipantInfo:
         :param df: dataframe WITH CORRECT NAMES
         '''
         self.participants_mail = df["Email - same as in the registration form"]
-        if nan_handler(df["Do you wish to include an image in your abstract?"]) in [True, "True", "Yes"]:
+        if nan_handler(df["Upload image"]):
             # istfg get your forms columns right
             self.image_link = df["Upload image"]
-            download_image(self.image_link, )
-            self.abstract = df["Abstract.1"]
+            download_image(self.image_link, self.participants_mail)
+            self.image_dir = "downloaded/"+self.participants_mail+".jpg"
+            self.image_dir = "\n\\begin{figure}[H]\n\t\\centering\n\t\\includegraphics[width=0.9\\linewidth]{"+self.image_dir+"} \n\t\\label{fig}\n\\end{figure}"
+            self.abstract = df["Abstract"]
         else:
             self.abstract = df["Abstract"]
         self.abstract = self.abstract
@@ -141,7 +144,7 @@ class SymbiosisActiveParticipantInfo:
         self.authors_list_class = OrderedAuthorsList(
             df[['Author 1', 'Affiliation 1', 'Author 2', 'Affiliation 2', 'Author 3',
                 'Affiliation 3', 'Author 4', 'Affiliation 4', 'Author 5',
-                'Affiliation 5', 'More than 5 co-authors?',
+                'Affiliation 5',
                 'Please provide the list of all authors',
                 'Please provide the list of all authors\' afiliations', 'Presenter',
                 "Corresponding author", "Corresponding author's email"]])
@@ -152,12 +155,12 @@ class SymbiosisActiveParticipantInfo:
             "INSERT-TITLE": self.abstract_title,
             "INSERT-AUTHORS-NAMES": self.authors_list_class.get_authors_names(),
             "INSERT-AFFILIATIONS": self.authors_list_class.get_affiliations(),
-            "INSERT-CORRESPONDING-EMAILS": self.authors_list_class.get_corresponding_mails().replace('_','\_'),
-            "INSERT-MAIN-TEXT": self.abstract.replace(". ", ".\n").replace("%", "\%"),
+            "INSERT-CORRESPONDING-EMAILS": self.authors_list_class.get_corresponding_mails().replace('_','\\_'),
+            "INSERT-MAIN-TEXT": self.abstract.replace("\\","\\\\").replace(". ", ".\\n ").replace("%", "\\%").replace("_", "\\_"),
+            "INSERT-IMAGE": self.image_dir,
             "INSERT-KEYWORDS": self.keywords
         }
         return dict
-
 
 def nan_handler(something):
     """
@@ -180,7 +183,7 @@ file_path = 'test files/abstracts-for-posters.csv'
 
 # list of all participants
 def df_reader(file_path):
-    df = pd.read_csv(file_path)
+    df = pd.read_csv(file_path, delimiter=';')
     participants = []
     for index, row in df.iterrows():
         participant = SymbiosisActiveParticipantInfo(row)
